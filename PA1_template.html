@@ -275,9 +275,8 @@ head(activityImp)</code></pre>
 ## 5    NA       20 2012-10-01
 ## 6    NA       25 2012-10-01</code></pre>
 <p>Step 7 use Weekday functionto see if there are differences in weekends to weekdays</p>
-<pre class="r"><code>WW &lt;- mutate(activity, weektype = ifelse(weekdays(activity$date) == &quot;Saturday&quot; | weekdays(activity$date) == &quot;Sunday&quot;, &quot;weekend&quot;, &quot;weekday&quot;))</code></pre>
-<pre><code>## Warning: package 'bindrcpp' was built under R version 3.5.1</code></pre>
-<pre class="r"><code>WW$weektype &lt;- as.factor(WW$weektype)</code></pre>
+<pre class="r"><code>WW &lt;- mutate(activity, weektype = ifelse(weekdays(activity$date) == &quot;Saturday&quot; | weekdays(activity$date) == &quot;Sunday&quot;, &quot;weekend&quot;, &quot;weekday&quot;))
+WW$weektype &lt;- as.factor(WW$weektype)</code></pre>
 <p>Calculate 5 min intervals and use ggplot</p>
 <pre class="r"><code>interval_full &lt;- WW %&gt;% group_by(interval, weektype) 
 FM &lt;- ggplot(interval_full, aes(x=interval, y=steps, color = weektype)) + geom_line() + facet_wrap(~weektype, ncol = 1, nrow=2)
