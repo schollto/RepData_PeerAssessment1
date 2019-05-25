@@ -1,0 +1,99 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
+Course Project 1 Reproducible Research Tony Schollum
+=======================================================
+
+##Step 1 Read in the dataset
+
+```{r}
+activity<-read.csv("activity.csv")
+```
+set the environment
+```{r,echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+```
+
+
+Explore the data
+```{r}
+head(activity)
+summary(activity)
+```
+
+It appears that we have to change the date column into a date format, the best option here is lubridate
+
+```{r}
+activity$date<-ymd(activity$date)
+length(unique(activity$date))
+```
+
+and there are a number of missing steps counts to fix
+```{r}
+activity_na<-subset(activity, !is.na(activity$steps))
+```
+
+##Step 2 Histogram of Total Number of Steps taken per Day
+
+```{r}
+SPD<-tapply(activity_na$steps, activity_na$date, sum, na.rm=TRUE, simplify = T)
+
+hist(x = SPD, col = rgb(0.8, 0.22,0,0.3), breaks = 30, xlab = "Steps", ylab = "Frequency", main = "Total Number of Steps Taken Per Day")
+```
+
+##Step 3 Mean and Median Steps per Day
+Use of simple functions
+```{r}
+mean(SPD)
+median(SPD)
+```
+## Step 4 Average Daily Activity Pattern
+```{r}
+Interval<- tapply(activity_na$steps, activity_na$interval, mean, na.rm = TRUE, simplify = T)
+Int <- data.frame(interval = as.integer(names(Interval)), avg = Interval)
+with(Int,
+     plot(interval,
+          avg,
+          type = "b",
+          col = "blue",
+          xlab = "5 minute intervals",
+          ylab = "avg steps in intervals"))
+```
+
+## Step 5, Interval showing the maximum number of steps```{r}
+From the plot it appears to be around 800
+```{r}
+max_steps <- max(Int$avg)
+Int[Int$avg ==max_steps,]
+```
+
+## Step 6, Code to impute missing data
+```{r}
+sum(is.na(activity$steps))
+```
+
+To calculate the missing data we can use the mean for the interval that is missing
+```{r}
+activity$CompleteSteps <- ifelse(is.na(activity$steps), round(activity$steps[match(activity$interval, activity$interval)],0), activity$steps)
+```
+
+```{r}
+activityImp <- data.frame(steps=activity$CompleteSteps, interval=activity$interval, date=activity$date)
+head(activityImp)
+```
+Step 7 use Weekday functionto see if there are differences in weekends to weekdays
+```{r}
+WW <- mutate(activity, weektype = ifelse(weekdays(activity$date) == "Saturday" | weekdays(activity$date) == "Sunday", "weekend", "weekday"))
+WW$weektype <- as.factor(WW$weektype)
+```
+Calculate 5 min intervals and use ggplot 
+```{r}
+interval_full <- WW %>% group_by(interval, weektype) 
+FM <- ggplot(interval_full, aes(x=interval, y=steps, color = weektype)) + geom_line() + facet_wrap(~weektype, ncol = 1, nrow=2)
+ print(FM)
+```
